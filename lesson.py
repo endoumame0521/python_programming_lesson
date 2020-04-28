@@ -1,36 +1,69 @@
 """
-pickleとは
-・pythonのコードで書いた内容をそのまま外部ファイル(.pickle)に
-　書き出したり読み出したりする事ができるライブラリ。
-・データベースではない。あくまで外部ファイルに保存しているだけ。
-・使用用途はpython内だけがいい。なぜなら他の言語とは互換性がないから。
-　その点、データベースは他の言語とも互換性がある。
+MondoDBについて
+・ドキュメント指向データーベース
+・json形式で記述してDBに保存するのでSQL文を必要としない(No SQL)
+・mongodbでは大体時間も保存する
+・mongodbは大体ログなどを大量に保存するのに使う
 """
 
-import pickle
+import datetime
 
-# 確認用に適当にクラスを定義
-class T(object):
-    def __init__(self, name):
-        self.name = name
+from pymongo import MongoClient
 
+client = MongoClient('mongodb://localhost:27017/')
+db = client['test_database']
 
-# 確認用に適用に辞書を定義
-data = {
-    'a': [1, 2, 3],
-    'b': ('test', 'test'),
-    'c': {'test', 'test'},
-    'd': T('test'),
+stack1 = {
+    'name': 'customer1',
+    'pip': ['python', 'java', 'go'],
+    'info': {'os': 'mac'},
+    'date': datetime.datetime.utcnow()
 }
 
-# wb...write binary（バイナリ形式で書き込み）
-with open('data.pickle', 'wb') as f:
-    pickle.dump(data, f)
+stack2 = {
+    'name': 'customer2',
+    'pip': ['python', 'java'],
+    'info': {'os': 'windows'},
+    'date': datetime.datetime.utcnow()
+}
+# stacksという名前のテーブルを作成（しているようなイメージ）
+db_stacks = db.stacks
+# stack1の内容をDBに投入して、その後返ってきたidをstack_idという名前の変数に格納
+# stack_id = db_stacks.insert_one(stack1).inserted_id
+# print(stack_id, type(stack_id))
 
-# rb...read binary（バイナリ形式で読み込み）
-with open('data.pickle', 'rb') as f:
-    data_loaded = pickle.load(f)
-    print(type(data_loaded['a']))
-    print(type(data_loaded['b']))
-    print(type(data_loaded['c']))
-    print(type(data_loaded['d']))
+
+from bson.objectid import ObjectId
+
+# スタックIDを文字列で格納(このままだと検索できないので下記のようにObjectIdで囲って変換する必要がある)
+# str_stack_id = '5ea80d9345ecee4d0e3ee233'
+# 上記で投入したデータをDBから取得
+# print(db_stacks.find_one({'_id': ObjectId(str_stack_id)}))
+
+# id以外でも検索できる
+# print(db_stacks.find_one({'name': 'customer1'}))
+# print(db_stacks.find_one({'pip': ['python', 'java', 'go']}))
+
+
+# stack_id = db_stacks.insert_one(stack2).inserted_id
+# print(stack_id, type(stack_id))
+
+# データベースを全部取得する場合
+# for stack in db_stacks.find():
+#     print(stack)
+
+# 時間での検索方法
+# now = datetime.datetime.utcnow()
+# lt...less than 今より過去のもの、gt...greater than 今より未来のもの
+# for stack in db_stacks.find({'date': {'$lt': now}}):
+#     print(stack)
+
+# name: customer1のデータをname: yyyにアップデート
+db_stacks.find_one_and_update(
+    {'name': 'customer1'}, {'$set': {'name': 'yyy'}}
+)
+print(db_stacks.find_one({'name': 'yyy'}))
+
+# name: customer1のデータ削除
+db_stacks.delete_one({'name': 'yyy'})
+print(db_stacks.find_one({'name': 'yyy'}))
