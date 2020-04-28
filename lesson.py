@@ -1,31 +1,18 @@
-# SMTPハンドラーでログをEmail送信（Hot mailの場合）
-
-import logging
-import logging.handlers
+from optparse import OptionParser
 
 
-# メールの設定
-smtp_host = 'smtp.live.com'
-smtp_port = 587
-from_email = 'xxxx@hotmail.com'
-to_email = 'yyyy@hotmail.com'
-user_name = 'tanakasan'
-password = 'fsflksdfsdfk,'
+def main():
+    usage = 'usage %prog [options] arg1 arg2'
+    parser = OptionParser(usage=usage)
+    parser.add_option('-f', '--file', action='store', type='string',
+                      dest='filename', help='file name')
 
-logger = logging.getLogger('email')
+    parser.add_option('n', '--num', action='store', type='int', dest='num')
 
-# ログを送るレベルをcriticalに設定
-logger.setLevel(logging.CRITICAL)
+    options, args = parser.parse_args()
+    print(options.filename)
+    print(args)
 
-# ログをメールで送る
-logger.addHandler(logging.handlers.SMTPHandler(
-    (smtp_host, smtp_port), from_email, to_email,
-    subject='Admin test log',
-    credentials=(user_name, password),
-    secure=(None, None, None),
-    timeout=20
-))
 
-logger.info('test')
-logger.critical('critical')
-
+if __name__ == '__main__':
+    main()
